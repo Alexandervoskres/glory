@@ -1,0 +1,1451 @@
+/* ===== Переменные ===== */
+:root {
+  --bg: #07080b;
+  --bg-light: #0e1015;
+  --text: #e8e2d6;
+  --text-soft: #c9c2b5;
+  --muted: #7f7b74;
+  --red: #c8102e;
+  --red-light: #e0324c;
+  --line: rgba(232, 226, 214, 0.1);
+
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Inter', Arial, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  /* курсор-меч */
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M2 2 L7 3 L21 17 L17 21 L3 7 Z' fill='%23e8e2d6' stroke='%23000' stroke-width='1'/%3E%3Cpath d='M14 24 L24 14' stroke='%23c8102e' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M20 20 L27 27' stroke='%233a2a22' stroke-width='3.5' stroke-linecap='round'/%3E%3Ccircle cx='28' cy='28' r='2.6' fill='%23c8102e'/%3E%3C/svg%3E") 2 2, auto;
+}
+
+::selection {
+  background: var(--red);
+  color: #fff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* ===== Общие классы ===== */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.section {
+  padding: 160px 40px;
+}
+
+.label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(52px, 7vw, 104px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  margin-bottom: 32px;
+}
+
+.big-text {
+  font-size: clamp(19px, 1.8vw, 24px);
+  line-height: 1.5;
+  color: var(--text-soft);
+  max-width: 560px;
+  margin-bottom: 20px;
+}
+
+.big-text em,
+.legend em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.15em;
+  color: var(--red-light);
+}
+
+.muted-text {
+  color: var(--muted);
+  max-width: 460px;
+}
+
+.red-dot {
+  color: var(--red);
+}
+
+.section-label {
+  margin-bottom: 48px;
+}
+
+/* появление при скролле */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.1s ease, transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ===== Фишка: удар мечом ===== */
+.slash-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+/* эти слова рисует canvas, сам текст прячем */
+[data-slice] {
+  color: transparent;
+  user-select: none;
+}
+
+/* шум как на старой плёнке */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 0.6s steps(4) infinite;
+}
+
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3%, 2%); }
+  50% { transform: translate(2%, -3%); }
+  75% { transform: translate(-2%, -1%); }
+  100% { transform: translate(1%, 3%); }
+}
+
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ===== Прелоадер ===== */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #040405;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.preloader--hide {
+  transform: translateY(-100%);
+}
+
+.preloader__name {
+  font-family: var(--serif);
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  animation: breathe 2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.preloader__line {
+  width: 200px;
+  height: 1px;
+  background: var(--line);
+}
+
+.preloader__fill {
+  height: 100%;
+  background: var(--red);
+  transition: width 0.1s linear;
+}
+
+.preloader__count {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+}
+
+/* ===== Навигация ===== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  padding: 26px 40px;
+  transition: background 0.4s, padding 0.4s;
+}
+
+.navbar--scrolled {
+  padding: 16px 40px;
+  background: rgba(7, 8, 11, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+
+.logo {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1;
+  margin-right: auto;
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+}
+
+.nav-links a {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  padding: 6px 0;
+  transition: color 0.3s;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.4s ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--text);
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.nav-lang {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  color: var(--muted);
+  padding-left: 24px;
+  border-left: 1px solid var(--line);
+}
+
+.burger {
+  display: none;
+  width: 32px;
+  height: 20px;
+  position: relative;
+}
+
+.burger span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--text);
+  transition: transform 0.3s, top 0.3s;
+}
+
+.burger span:first-child {
+  top: 6px;
+}
+
+.burger span:last-child {
+  top: 14px;
+}
+
+.burger--open span:first-child {
+  top: 10px;
+  transform: rotate(45deg);
+}
+
+.burger--open span:last-child {
+  top: 10px;
+  transform: rotate(-45deg);
+}
+
+/* ===== Первый экран ===== */
+.hero {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 120px;
+  padding-bottom: 100px;
+  position: relative;
+  isolation: isolate; /* чтобы рыцарь с z-index: -1 остался внутри секции */
+}
+
+/* силуэт рыцаря справа, прижат к краю экрана */
+.hero__knight {
+  position: absolute;
+  top: 0;
+  right: calc(50% - 50vw);
+  width: 52vw;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  animation: knightIn 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.hero__knight img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 62% 30%;
+  filter: grayscale(1) brightness(0.62) contrast(1.15);
+}
+
+/* растворяем края картинки в фоне */
+.hero__knight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--bg) 0%, rgba(7, 8, 11, 0.75) 30%, rgba(7, 8, 11, 0.1) 65%, transparent 100%),
+    linear-gradient(0deg, var(--bg) 0%, transparent 35%),
+    linear-gradient(180deg, var(--bg) 0%, transparent 18%);
+}
+
+@keyframes knightIn {
+  from {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+.hero__label {
+  margin-bottom: 4px;
+}
+
+.hero__title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: min(24vw, 320px);
+  line-height: 1;
+  margin-left: -0.03em;
+  white-space: nowrap;
+}
+
+.hero__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 40px;
+  margin-top: 16px;
+}
+
+.hero__text {
+  font-size: clamp(19px, 1.9vw, 24px);
+  line-height: 1.5;
+  color: var(--text-soft);
+  max-width: 520px;
+}
+
+.hero__hint {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.hero__hint .label {
+  color: var(--text-soft);
+  line-height: 1.9;
+}
+
+/* маленький "взмах" в подсказке */
+.hero__hint-slash {
+  width: 70px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #fff 70%, var(--red));
+  box-shadow: 0 0 12px rgba(200, 16, 46, 0.8);
+  transform: rotate(-25deg);
+  animation: hintSlash 2.4s ease-in-out infinite;
+}
+
+@keyframes hintSlash {
+  0% {
+    opacity: 0;
+    transform: rotate(-25deg) translateX(-40px) scaleX(0.2);
+  }
+  25% {
+    opacity: 1;
+    transform: rotate(-25deg) translateX(0) scaleX(1);
+  }
+  50%,
+  100% {
+    opacity: 0;
+    transform: rotate(-25deg) translateX(40px) scaleX(0.2);
+  }
+}
+
+.hero__cuts {
+  color: var(--red-light);
+  font-weight: 500;
+}
+
+.hero__bottom {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.scroll-hint__line {
+  width: 1px;
+  height: 60px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-hint__line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -30px;
+  width: 1px;
+  height: 30px;
+  background: var(--red);
+  animation: drop 2s ease-in-out infinite;
+}
+
+@keyframes drop {
+  to {
+    top: 60px;
+  }
+}
+
+/* ===== Кодекс ===== */
+.codex {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+}
+
+.codex__intro {
+  position: sticky;
+  top: 140px;
+  align-self: start;
+}
+
+.virtues {
+  list-style: none;
+}
+
+.virtue {
+  position: relative;
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  column-gap: 20px;
+  padding: 32px 0;
+  border-top: 1px solid var(--line);
+}
+
+/* красная линия при наведении */
+.virtue::before,
+.part::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--red);
+  transition: width 0.6s ease;
+}
+
+.virtue:hover::before,
+.part--active::before {
+  width: 100%;
+}
+
+.virtue__num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--red);
+  padding-top: 12px;
+}
+
+.virtue__name {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1.1;
+  transition: transform 0.4s ease;
+}
+
+.virtue:hover .virtue__name {
+  transform: translateX(10px);
+}
+
+.virtue__text {
+  grid-column: 2;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* ===== Бегущая строка ===== */
+.marquee {
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 28px 0;
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+
+.marquee__item {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(36px, 5vw, 64px);
+  line-height: 1;
+  color: var(--text-soft);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.marquee__star {
+  font-style: normal;
+  font-size: 0.4em;
+  color: var(--red);
+  margin: 0 48px;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ===== Арсенал (горизонтальный скролл) ===== */
+.arsenal {
+  position: relative;
+  /* одна "единица" меча. 540 единиц = самый длинный меч */
+  --sword-unit: max(0.3px, calc((100vh - 400px) / 530));
+}
+
+.arsenal__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.arsenal__top {
+  display: flex;
+  justify-content: space-between;
+  padding: 110px 40px 0;
+}
+
+.arsenal__counter b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.arsenal__track {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  width: max-content;
+  padding: 0 40px;
+  will-change: transform;
+}
+
+.arsenal__intro {
+  width: 460px;
+  flex-shrink: 0;
+  align-self: center;
+  padding-right: 80px;
+}
+
+.blade-card {
+  position: relative;
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.blade-card__sword {
+  position: relative;
+  padding-bottom: 14px;
+}
+
+.sword {
+  display: block;
+  width: auto;
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), filter 0.6s;
+}
+
+.blade-card:hover .sword {
+  transform: translateY(-14px);
+  filter: drop-shadow(0 0 22px rgba(200, 16, 46, 0.45));
+}
+
+.blade-card__info {
+  width: 100%;
+  height: 210px;
+  border-top: 1px solid var(--line);
+  padding: 22px 28px 0 16px;
+}
+
+.blade-card__info h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.15;
+  margin: 6px 0 8px;
+}
+
+.blade-card__specs {
+  display: flex;
+  gap: 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+
+.blade-card__specs span + span::before {
+  content: '·';
+  color: var(--red);
+  margin-right: 14px;
+}
+
+.blade-card__text {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.arsenal__progress {
+  height: 1px;
+  background: var(--line);
+  margin: 0 40px 36px;
+}
+
+.arsenal__bar {
+  height: 100%;
+  background: var(--red);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+/* ===== Доспех ===== */
+.armor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.armor__figure {
+  position: sticky;
+  top: 100px;
+}
+
+.armor__image {
+  position: relative;
+  max-width: min(100%, calc((100vh - 140px) * 0.75));
+}
+
+.armor__image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--line);
+  pointer-events: none;
+}
+
+/* точки на картинке */
+.hotspot {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.hotspot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 226, 214, 0.5);
+  animation: ring 2.2s ease-out infinite;
+}
+
+@keyframes ring {
+  from {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.hotspot__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.hotspot--active .hotspot__dot {
+  background: var(--red);
+  transform: scale(1.4);
+  box-shadow: 0 0 16px var(--red);
+}
+
+.hotspot--active::before {
+  border-color: var(--red);
+}
+
+.hotspot__label {
+  position: absolute;
+  left: 34px;
+  top: 50%;
+  transform: translate(-6px, -50%);
+  white-space: nowrap;
+  background: rgba(7, 8, 11, 0.88);
+  border-left: 2px solid var(--red);
+  padding: 6px 12px;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.hotspot--active .hotspot__label {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+.parts {
+  list-style: none;
+  margin-top: 40px;
+}
+
+.part {
+  position: relative;
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  padding: 22px 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.part__num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--red);
+  padding-top: 12px;
+}
+
+.part__name {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1.2;
+  color: var(--muted);
+  transition: color 0.4s, transform 0.4s;
+}
+
+.part--active .part__name {
+  color: var(--text);
+  transform: translateX(10px);
+}
+
+/* описание раскрывается как аккордеон */
+.part__text {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  color: var(--muted);
+  transition: max-height 0.5s ease, opacity 0.5s ease, margin 0.5s ease;
+}
+
+.part--active .part__text {
+  max-height: 120px;
+  opacity: 1;
+  margin-top: 6px;
+}
+
+.helmets {
+  margin-top: 160px;
+}
+
+.helmets__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.helmet {
+  height: 100%;
+  padding: 40px 28px 36px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent);
+  transition: border-color 0.5s, background 0.5s;
+}
+
+.helmet:hover {
+  border-color: rgba(200, 16, 46, 0.5);
+  background: linear-gradient(180deg, rgba(200, 16, 46, 0.07), transparent);
+}
+
+.helmet__svg {
+  display: block;
+  width: 100%;
+  max-width: 170px;
+  height: auto;
+  margin: 0 auto 32px;
+  fill: none;
+  stroke: var(--text-soft);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: stroke 0.5s, transform 0.6s;
+}
+
+.helmet:hover .helmet__svg {
+  stroke: var(--red-light);
+  transform: translateY(-6px);
+}
+
+.helmet__svg .dark {
+  fill: #000;
+}
+
+/* закрашенная деталь перекрывает линии под ней */
+.helmet__svg .solid {
+  fill: #0c0d11;
+}
+
+.helmet__svg .rivet {
+  fill: var(--text-soft);
+  stroke: none;
+}
+
+.helmet h3 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 6px 0 10px;
+}
+
+.helmet__text {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* ===== Галерея ===== */
+.gallery__head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: end;
+  margin-bottom: 100px;
+}
+
+.gallery__orders {
+  line-height: 2;
+  margin-top: 28px;
+}
+
+.gallery__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  max-width: 1040px;
+}
+
+/* вторая карточка ниже — как в журнале */
+.gallery__grid .card:nth-child(2) {
+  margin-top: 180px;
+}
+
+.card__meta {
+  margin-bottom: 10px;
+}
+
+.card__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+
+.card__image {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--bg-light);
+  cursor: zoom-in;
+}
+
+.card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) brightness(0.8) contrast(1.05);
+  transform: scale(1.02);
+  transition: transform 1.4s cubic-bezier(0.2, 0.7, 0.2, 1), filter 1s ease;
+}
+
+/* цвет появляется только при наведении — у розы он алый */
+.card__image:hover img {
+  filter: grayscale(0) brightness(1) contrast(1.05);
+  transform: scale(1.08);
+}
+
+.card__image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--line);
+  pointer-events: none;
+}
+
+.card__open {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+
+.card__image:hover .card__open {
+  opacity: 1;
+  transform: none;
+}
+
+.card__quote {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1.3;
+  margin: 28px 0 14px;
+}
+
+.card__text {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+/* лайтбокс */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(3, 3, 4, 0.94);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 60px 20px;
+  animation: fadeIn 0.4s ease;
+  cursor: zoom-out;
+}
+
+.lightbox img {
+  max-height: 80vh;
+  width: auto;
+  cursor: default;
+  animation: zoomIn 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.94);
+  }
+}
+
+.lightbox__close {
+  position: absolute;
+  top: 28px;
+  right: 40px;
+  color: var(--text);
+}
+
+.lightbox__caption {
+  font-family: var(--serif);
+  font-size: 26px;
+}
+
+/* ===== Цифры ===== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.stat {
+  padding: 60px 30px;
+  border-left: 1px solid var(--line);
+}
+
+.stat:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.stat__value {
+  font-family: var(--serif);
+  font-size: clamp(64px, 8vw, 120px);
+  line-height: 1;
+  margin-bottom: 18px;
+}
+
+.stat__value span {
+  font-size: 0.35em;
+  color: var(--red);
+}
+
+/* ===== Хроника ===== */
+.chronicle {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 80px;
+}
+
+.chronicle__side {
+  position: sticky;
+  top: 140px;
+  align-self: start;
+}
+
+.event {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 30px;
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+}
+
+.event__year {
+  font-family: var(--serif);
+  font-size: 64px;
+  line-height: 1;
+  color: var(--muted);
+  transition: color 0.4s;
+}
+
+.event:hover .event__year {
+  color: var(--red-light);
+}
+
+.event__title {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.event__text {
+  color: var(--muted);
+}
+
+/* ===== Легенда (цитата с огромным мечом) ===== */
+.legend {
+  position: relative;
+  min-height: 110vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* без маски меч и свечение обрезаются краем секции резкой линией */
+.legend__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 75%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 25%, #000 75%, transparent 100%);
+}
+
+.legend__glow {
+  position: absolute;
+  right: -10vw;
+  top: 50%;
+  width: 70vw;
+  height: 70vw;
+  transform: translateY(-50%);
+  background: radial-gradient(circle, rgba(200, 16, 46, 0.16), transparent 60%);
+  pointer-events: none;
+}
+
+.legend__sword {
+  position: absolute;
+  right: 14%;
+  top: -6%;
+  --sword-unit: 0.3vh;
+}
+
+.legend__sword .sword {
+  filter: drop-shadow(0 0 40px rgba(200, 16, 46, 0.35));
+}
+
+.legend__content {
+  position: relative;
+  width: 100%;
+}
+
+.legend blockquote {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(38px, 5vw, 76px);
+  line-height: 1.08;
+  max-width: 760px;
+  margin: 28px 0;
+}
+
+.legend__cite {
+  color: var(--text-soft);
+}
+
+/* ===== Подвал ===== */
+.footer {
+  border-top: 1px solid var(--line);
+}
+
+.footer__big {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: min(25vw, 330px);
+  line-height: 1;
+  text-align: center;
+  padding: 50px 0 10px;
+}
+
+.footer__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 30px;
+  padding-bottom: 40px;
+}
+
+.footer__up {
+  transition: color 0.3s;
+}
+
+.footer__up:hover {
+  color: var(--red-light);
+}
+
+/* ===== Адаптив ===== */
+@media (max-width: 1100px) {
+  .nav-links {
+    gap: 22px;
+  }
+
+  .helmets__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .codex,
+  .chronicle,
+  .gallery__head,
+  .armor {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .codex__intro,
+  .chronicle__side,
+  .armor__figure {
+    position: static;
+  }
+
+  .legend__sword {
+    right: 4%;
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 768px) {
+  .container,
+  .section {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .section {
+    padding-top: 100px;
+    padding-bottom: 100px;
+  }
+
+  .navbar,
+  .navbar--scrolled {
+    padding: 18px 20px;
+  }
+
+  .nav-lang {
+    display: none;
+  }
+
+  .burger {
+    display: block;
+    z-index: 2;
+  }
+
+  .nav-links {
+    position: fixed;
+    inset: 0;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 20px;
+    gap: 24px;
+    background: var(--bg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  .nav-links--open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-links a {
+    font-family: var(--serif);
+    font-size: 40px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .hero__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  /* на телефоне рыцарь на весь экран, но тусклее */
+  .hero__knight {
+    width: 100vw;
+    opacity: 0.75;
+  }
+
+  .hero__knight img {
+    object-position: 70% 30%;
+  }
+
+  .hero__bottom {
+    left: 20px;
+    right: 20px;
+    bottom: 24px;
+  }
+
+  .arsenal {
+    --sword-unit: max(0.3px, calc((100vh - 400px) / 540));
+  }
+
+  .arsenal__top {
+    padding: 84px 20px 0;
+  }
+
+  .arsenal__top .label:first-child {
+    max-width: 60%;
+  }
+
+  .arsenal__track {
+    padding: 0 20px;
+  }
+
+  .arsenal__intro {
+    width: 300px;
+    padding-right: 40px;
+  }
+
+  .blade-card {
+    width: 230px;
+  }
+
+  .arsenal__progress {
+    margin: 0 20px 24px;
+  }
+
+  .helmets {
+    margin-top: 100px;
+  }
+
+  .helmets__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .part__name {
+    font-size: 28px;
+  }
+
+  .hotspot__label {
+    display: none;
+  }
+
+  .gallery__grid {
+    grid-template-columns: 1fr;
+    gap: 80px;
+  }
+
+  .gallery__grid .card:nth-child(2) {
+    margin-top: 0;
+  }
+
+  .gallery__head {
+    margin-bottom: 60px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .stat,
+  .stat:first-child {
+    padding: 40px 0;
+    border-left: none;
+    border-top: 1px solid var(--line);
+  }
+
+  .stat:first-child {
+    border-top: none;
+  }
+
+  .event {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .event__year {
+    font-size: 48px;
+  }
+
+  .virtue__name {
+    font-size: 32px;
+  }
+
+  .virtue {
+    grid-template-columns: 40px 1fr;
+  }
+
+  .footer__row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
